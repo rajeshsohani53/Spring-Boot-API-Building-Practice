@@ -4,25 +4,37 @@
     <meta charset="UTF-8">
     <title>All Students</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; }
+        body { font-family: Arial, sans-serif; max-width: 750px; margin: 40px auto; padding: 0 20px; }
         h1 { color: #333; }
-        button { padding: 10px 20px; background: #1565c0; color: white; border: none; cursor: pointer; border-radius: 4px; }
-        button:hover { background: #0d47a1; }
+        button { padding: 6px 12px; color: white; border: none; cursor: pointer; border-radius: 4px; }
+        .refresh { background: #1565c0; padding: 10px 20px; }
+        .refresh:hover { background: #0d47a1; }
+        .delete { background: #c62828; }
+        .delete:hover { background: #8e0000; }
+        .update { background: #ef6c00; }
+        .update:hover { background: #bf4e00; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; vertical-align: middle; }
         th { background: #f5f5f5; }
         #status { margin-top: 12px; color: #666; }
+        input { padding: 5px; width: 110px; box-sizing: border-box; }
+        .actions { white-space: nowrap; }
     </style>
 </head>
 <body>
     <h1>All Students</h1>
 
-    <button onclick="loadStudents()">Refresh List</button>
+    <button class="refresh" onclick="loadStudents()">Refresh List</button>
     <div id="status"></div>
 
-    <table id="studentTable">
+    <table>
         <thead>
-            <tr><th>ID</th><th>Name</th><th>Course</th></tr>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Course</th>
+                <th>Actions</th>
+            </tr>
         </thead>
         <tbody id="studentBody"></tbody>
     </table>
@@ -38,25 +50,66 @@
             const body = document.getElementById("studentBody");
 
             try {
-                // 1. GET the list of students from the API
                 const response = await fetch("/students");
+                if (!response.ok) throw new Error("Status " + response.status);
 
-                // 2. Convert the JSON response into a JavaScript array
                 const students = await response.json();
-
-                // 3. Clear the table, then add one row per student
                 body.innerHTML = "";
+
                 if (students.length === 0) {
                     status.textContent = "No students yet. Add one first.";
-                } else {
-                    status.textContent = "Total: " + students.length;
-                    students.forEach(s => {
-                        const row = `<tr><td>${s.id}</td><td>${s.name}</td><td>${s.course}</td></tr>`;
-                        body.innerHTML += row;
-                    });
+                    return;
                 }
+
+                status.textContent = "Total: " + students.length;
+
+                students.forEach(s => {
+                    const row = document.createElement("tr");
+                    row.innerHTML =
+                        "<td>" + s.id + "</td>" +
+                        "<td>" + s.name + "</td>" +
+                        "<td>" + s.course + "</td>" +
+                        "<td class='actions'>" +
+                            "<input id='name-" + s.id + "' placeholder='New name'>" +
+                            "<input id='course-" + s.id + "' placeholder='New course'>" +
+                            "<button class='update' onclick='updateStudent(" + s.id + ")'>Update</button> " +
+                            "<button class='delete' onclick='deleteStudent(" + s.id + ")'>Delete</button>" +
+                        "</td>";
+                    body.appendChild(row);
+                });
             } catch (err) {
                 status.textContent = "Error loading students: " + err;
+            }
+        }
+
+        // DELETE /students/{id}
+        async function deleteStudent(id) {
+            try {
+                const response = await fetch("/students/" + id, { method: "DELETE" });
+                if (!response.ok) throw new Error("Status " + response.status);
+                loadStudents();   // refresh the table so the row disappears
+            } catch (err) {
+                document.getElementById("status").textContent = "Delete failed: " + err;
+            }
+        }
+
+        // PUT /students/{id}  — sends the new name/course from that row's inputs
+        async function updateStudent(id) {
+            const name = document.getElementById("name-" + id).value;
+            const course = document.getElementById("course-" + id).value;
+
+            const updated = { id: id, name: name, course: course };
+
+            try {
+                const response = await fetch("/students/" + id, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(updated)
+                });
+                if (!response.ok) throw new Error("Status " + response.status);
+                loadStudents();   // refresh to show the updated values
+            } catch (err) {
+                document.getElementById("status").textContent = "Update failed: " + err;
             }
         }
     </script>
