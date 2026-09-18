@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>All Students</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; }
+        h1 { color: #333; }
+        button { padding: 10px 20px; background: #1565c0; color: white; border: none; cursor: pointer; border-radius: 4px; }
+        button:hover { background: #0d47a1; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #f5f5f5; }
+        #status { margin-top: 12px; color: #666; }
+    </style>
+</head>
+<body>
+    <h1>All Students</h1>
+
+    <button onclick="loadStudents()">Refresh List</button>
+    <div id="status"></div>
+
+    <table id="studentTable">
+        <thead>
+            <tr><th>ID</th><th>Name</th><th>Course</th></tr>
+        </thead>
+        <tbody id="studentBody"></tbody>
+    </table>
+
+    <p><a href="/add.html">&larr; Add a student</a></p>
+
+    <script>
+        // Load the list automatically when the page opens
+        window.onload = loadStudents;
+
+        async function loadStudents() {
+            const status = document.getElementById("status");
+            const body = document.getElementById("studentBody");
+
+            try {
+                // 1. GET the list of students from the API
+                const response = await fetch("/students");
+
+                // 2. Convert the JSON response into a JavaScript array
+                const students = await response.json();
+
+                // 3. Clear the table, then add one row per student
+                body.innerHTML = "";
+                if (students.length === 0) {
+                    status.textContent = "No students yet. Add one first.";
+                } else {
+                    status.textContent = "Total: " + students.length;
+                    students.forEach(s => {
+                        const row = `<tr><td>${s.id}</td><td>${s.name}</td><td>${s.course}</td></tr>`;
+                        body.innerHTML += row;
+                    });
+                }
+            } catch (err) {
+                status.textContent = "Error loading students: " + err;
+            }
+        }
+    </script>
+</body>
+</html>

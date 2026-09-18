@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Student</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 500px; margin: 40px auto; padding: 0 20px; }
+        h1 { color: #333; }
+        label { display: block; margin-top: 12px; font-weight: bold; }
+        input { width: 100%; padding: 8px; margin-top: 4px; box-sizing: border-box; }
+        button { margin-top: 16px; padding: 10px 20px; background: #2e7d32; color: white; border: none; cursor: pointer; border-radius: 4px; }
+        button:hover { background: #1b5e20; }
+        #result { margin-top: 20px; padding: 12px; border-radius: 4px; white-space: pre-wrap; }
+        .success { background: #e8f5e9; color: #1b5e20; }
+        .error { background: #ffebee; color: #b71c1c; }
+    </style>
+</head>
+<body>
+    <h1>Add a Student</h1>
+
+    <label for="id">ID</label>
+    <input type="number" id="id" placeholder="e.g. 1">
+
+    <label for="name">Name</label>
+    <input type="text" id="name" placeholder="e.g. Raj">
+
+    <label for="course">Course</label>
+    <input type="text" id="course" placeholder="e.g. Java Full Stack">
+
+    <button onclick="addStudent()">Add Student</button>
+
+    <div id="result"></div>
+
+    <p><a href="/list.html">View all students &rarr;</a></p>
+
+    <script>
+        async function addStudent() {
+            // 1. Read the values the user typed into the form
+            const student = {
+                id: Number(document.getElementById("id").value),
+                name: document.getElementById("name").value,
+                course: document.getElementById("course").value
+            };
+
+            const resultDiv = document.getElementById("result");
+
+            try {
+                // 2. Send a POST request to the API with the student as JSON
+                const response = await fetch("/students", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(student)
+                });
+
+                // 3. Read the JSON that the API sends back
+                const saved = await response.json();
+
+                // 4. Show it on the page
+                resultDiv.className = "success";
+                resultDiv.textContent = "Saved successfully:\n" + JSON.stringify(saved, null, 2);
+            } catch (err) {
+                resultDiv.className = "error";
+                resultDiv.textContent = "Error: " + err;
+            }
+        }
+    </script>
+</body>
+</html>
